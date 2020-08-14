@@ -1,39 +1,32 @@
-import { getRepository, Repository } from 'typeorm';
+import { uuid } from 'uuidv4';
 
 import ICustomersRepository from '@modules/customers/repositories/ICustomersRepository';
 import ICreateCustomerDTO from '@modules/customers/dtos/ICreateCustomerDTO';
 import Customer from '@modules/customers/infra/typeorm/entities/Customer';
 
 class CustomersRepository implements ICustomersRepository {
-  private ormRepository: Repository<Customer>;
-
-  constructor() {
-    this.ormRepository = getRepository(Customer);
-  }
+  private customers: Customer[] = [];
 
   public async create({ name, email }: ICreateCustomerDTO): Promise<Customer> {
-    const customer = this.ormRepository.create({
-      name,
-      email,
-    });
+    const customer = new Customer();
 
-    await this.ormRepository.save(customer);
+    Object.assign(customer, { id: uuid(), name, email });
+
+    this.customers.push(customer);
 
     return customer;
   }
 
   public async findById(id: string): Promise<Customer | undefined> {
-    const findCustomer = await this.ormRepository.findOne(id);
+    const findCustomer = this.customers.find(customer => customer.id === id);
 
     return findCustomer;
   }
 
   public async findByEmail(email: string): Promise<Customer | undefined> {
-    const findCustomer = await this.ormRepository.findOne({
-      where: {
-        email,
-      },
-    });
+    const findCustomer = this.customers.find(
+      customer => customer.email === email,
+    );
 
     return findCustomer;
   }

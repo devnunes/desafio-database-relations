@@ -17,6 +17,12 @@ class CreateProductService {
 
   public async execute({ name, price, quantity }: IRequest): Promise<Product> {
     // TODO
+    const product = new Product();
+    console.log(name);
+    console.log(price);
+    console.log(quantity);
+
+    return product;
   }
 }
 

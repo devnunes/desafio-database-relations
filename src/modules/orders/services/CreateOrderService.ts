@@ -27,6 +27,8 @@ class CreateOrderService {
 
   public async execute({ customer_id, products }: IRequest): Promise<Order> {
     // TODO
+    const order = new Order();
+    return order;
   }
 }
 
