@@ -1,4 +1,5 @@
 import { inject, injectable } from 'tsyringe';
+import { validate } from 'uuid';
 
 import AppError from '@shared/errors/AppError';
 
@@ -20,14 +21,45 @@ interface IRequest {
 @injectable()
 class CreateOrderService {
   constructor(
+    @inject('OrdersRepository')
     private ordersRepository: IOrdersRepository,
+
+    @inject('ProductsRepository')
     private productsRepository: IProductsRepository,
+
+    @inject('CustomersRepository')
     private customersRepository: ICustomersRepository,
   ) {}
 
   public async execute({ customer_id, products }: IRequest): Promise<Order> {
-    // TODO
-    const order = new Order();
+    if (!validate(customer_id)) throw new AppError('Customer not valid');
+    const customer = await this.customersRepository.findById(customer_id);
+    if (!customer) {
+      throw new AppError('Customer not found');
+    }
+
+    const productsList = await this.productsRepository.findAllById(
+      products.map(({ id }) => ({ id })),
+    );
+
+    if (productsList.length <= 0) {
+      throw new AppError('Products not found');
+    }
+
+    await this.productsRepository.updateQuantity(products);
+
+    const newAddProducts = productsList.map(product => ({
+      product_id: product.id,
+      price: product.price,
+      quantity:
+        products[products.findIndex(data => data.id === product.id)].quantity,
+    }));
+
+    const order = await this.ordersRepository.create({
+      customer,
+      products: newAddProducts,
+    });
+
     return order;
   }
 }
